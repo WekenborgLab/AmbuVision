@@ -2,7 +2,6 @@
 
 A customizable programm to allow different levels of setting, chunking and job management
 
----
 
 ## Table of contents
 - [Overview](#overview)
@@ -18,3 +17,45 @@ A customizable programm to allow different levels of setting, chunking and job m
 3) Convertion of the output into both Excel and CSV file formats
 
 ---
+
+## Directory Layout
+
+```
+Ambuvision/
+├─ Step1_VLM_Greeness/
+  ├─ Imager.py
+  ├─ Middle.py
+  ├─ main.py
+  ├─ exifRecognition.py
+  ├─ PyCharmMiscProject.iml
+  ├─ README.md
+```
+
+---
+
+## Prerequisites
+
+- Python 3.10+
+- A local or remote LLM endpoint (OpenAI-compatible)
+- Storage volume depends on the information
+
+---
+
+## Quick start
+
+---
+
+## Step-by-step
+
+### Step 1: Extraction and downscaling of pictures
+**Script:** main.py
+**Input:**
+**Output dir:**
+
+---
+
+## Output
+
+- `.csv` -
+- `..xlsx` -
+- `` -
