@@ -9,9 +9,9 @@ A customizable programm to allow different levels of setting, chunking and job m
 - [Prerequisite](#prerequisites)
 - [Quick start](#quick-start)
 - [Step-by-step](#step-by-step)
-  - [Step 1: Extraction and downscaling of pictures](#extraction-and-downscaling-of-pictures)
-  - [Step 2: Creating jobs and correspondent requests to LLM-Server](#creating-jobs-and-correspondent-requests-to-llm-server)
-  - [Step 3: Conversion of the output into both Excel and CSV file formats](#conversion-of-the-output-into-both-excel-and-csv-file-formats)
+  - [Step 1: Extraction and downscaling of pictures](#step-1-extraction-and-downscaling-of-pictures)
+  - [Step 2: Creating jobs and correspondent requests to LLM-Server](#step-2-creating-jobs-and-correspondent-requests-to-llm-server)
+  - [Step 3: Conversion of the output into both Excel and CSV file formats](#step-3-conversion-of-the-output-into-both-excel-and-csv-file-formats)
 - [Outputs](#outputs)
 
 ---
