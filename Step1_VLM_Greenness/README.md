@@ -2,6 +2,7 @@
 
 A customizable programm to allow different levels of setting, chunking and job management
 
+---
 
 ## Table of contents
 - [Overview](#overview)
@@ -31,10 +32,10 @@ A customizable programm to allow different levels of setting, chunking and job m
 ```
 Ambuvision/
 ├─ Step1_VLM_Greeness/
-  ├─ Imager.py
-  ├─ Middle.py
-  ├─ main.py
-  ├─ exifRecognition.py
+  ├─ Imager.py              # Work with images and jobs
+  ├─ Middle.py              # Middle point between host and server
+  ├─ main.py                # Execution of all scripts combined
+  ├─ exifRecognition.py     # Algorithm, used prior to the main assignment
   ├─ PyCharmMiscProject.iml
   ├─ README.md
 ```
@@ -43,7 +44,7 @@ Ambuvision/
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.13+
 - A local or remote LLM endpoint (OpenAI-compatible)
 - Storage volume depends on the information
 - .env
@@ -61,23 +62,29 @@ python main.py
 ## Step-by-step
 
 ### Step 1: Extraction and downscaling of pictures
-**Script:** main.py
+**Script:** `main.py`
 **Input:** First and final set numbers
 **Output:** No
+
+This step defines the further workflow of the program.
 
 ---
 
 ### Step 2: Creating jobs and correspondent requests to LLM-Server
-**Script:** main.py
+**Script:** `main.py`
 **Input:** No
 **Output:** No
+
+This step is automatical and doesn't require interaction.
 
 ---
 
 ### Step 3: Conversion of the output into both Excel and CSV file formats
-**Script:** main.py
+**Script:** `main.py`
 **Input:** No
-**Output:** filename.csv, filename.xlsx, filename.json
+**Output:** `filename.csv`, `filename.xlsx`, `filename.json`, `token_report.json`, `run.log`
+
+This step is automatical and also final, producing the sorted out results and logs.
 
 ---
 
@@ -86,3 +93,5 @@ python main.py
 - `.csv` -  image evaluation, step 3
 - `.xlsx` - image evaluation, step 3
 - `.json` - image metadata, step 3
+- `token_report.json` - token number report for requests, step 3
+- `run.log` - error report, step 3
