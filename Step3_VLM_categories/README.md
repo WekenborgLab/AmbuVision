@@ -11,5 +11,5 @@ Ambuvision/
 │  ├─ allpsychologicalvariables_greater_equal_3_withoutdublicates.xlsx    # excel file with categories
 │  ├─ categories_1.xlsx                                                   # first half of the excel file
 │  ├─ categories_2.xlsx                                                   # second half of the excel file
-│  ├─ pyproject.toml                                                      #
+│  ├─ pyproject.toml                                                      # Central configuration file containing project metadata,Python version requirements, dependencies, and build-system settings 
 │  ├─ README.md
