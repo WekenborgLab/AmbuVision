@@ -13,8 +13,7 @@ Ambuvision/
 │  ├─ README.md
 ```
 
-## main.py
-### Summary
+## main
 This script processes all images in a given folder and evaluates each one across a set of 997 categories using LLaMA 4 vision-language model and Qwen3-VL-235B-A22B-Instruct-FP8. Categories can come from environment variables, a single Excel/CSV file, or a built-in fallback list. For each category, the script generates a prompt, runs model inference, and saves results to CSV/Excel.
 #### Key features:
 Loads settings from .env (paths, categories, concurrency, cost tracking, etc.)
@@ -26,7 +25,7 @@ Runs model calls in parallel and outputs logs, results, and token usage
 python main.py
 Requires proper .env configuration and (optionally) pandas/openpyxl for Excel support.
 
-## Imager.py
+## Imager
 The Imager class handles all low-level image processing, batching and result writing for the pipeline.
 ### What it does:
 Scans the input folder and collects all jpg/png images (grouped by subfolder).
