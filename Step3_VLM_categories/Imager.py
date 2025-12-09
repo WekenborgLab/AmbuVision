@@ -89,18 +89,6 @@ class Imager:
 
     # ---------- basic IO ----------
 
-    # Imager.py (add inside class Imager)
-    def _save_debug_image(self, folder: str, picture_id: str, jpeg_bytes: bytes):
-        try:
-            out_dir = os.path.join(self.output_path, "_debug_compressed", folder)
-            os.makedirs(out_dir, exist_ok=True)
-            out_path = os.path.join(out_dir, f"{Path(picture_id).stem}.jpg")
-            with open(out_path, "wb") as f:
-                f.write(jpeg_bytes)
-            self.logger.info(f"Saved debug compressed JPEG -> {out_path}")
-        except Exception as e:
-            self.logger.warning(f"Failed to save debug image for {picture_id}: {e}")
-
     def getInputFolder(self):
         return self.input_path
 
@@ -421,7 +409,6 @@ class Imager:
 
             # Downscale + JPEG compress once in memory (low-RAM path if pyvips available)
             compressed_bytes = await asyncio.to_thread(self._downscale_to_jpeg, image_path)
-            # self._save_debug_image(folder, picture_id, compressed_bytes)
 
             base_data = {
                 "PictureId": picture_id,
@@ -431,7 +418,7 @@ class Imager:
                 "TimeModified": image_time['TM']
             }
 
-            # Run the prompts with controlled per-image concurrency
+            # Run the 5 prompts with controlled per-image concurrency (default 1)
             sem = asyncio.Semaphore(self.per_image_jobs_concurrency)
 
             async def run_one_job(job):
@@ -480,12 +467,13 @@ class Imager:
 
         while True:
             try:
-                parsed, usage = await middle.sendImageRequestAsync(image_bytes, job["prompt"])
-                if isinstance(parsed, str) and parsed.startswith("Error processing image:"):
-                    raise RuntimeError(parsed)
+                content, usage = await middle.sendImageRequestAsync(image_bytes, job["prompt"])
+                if isinstance(content, str) and content.startswith("Error processing image:"):
+                    raise RuntimeError(content)
                 # track tokens if present
                 if usage:
                     self._accumulate_tokens(job_name, usage)
+                evaluation_str = content
                 break  # success
             except Exception as e:
                 attempt += 1
@@ -507,33 +495,31 @@ class Imager:
                 self.logger.warning(f"Retry {attempt}/{max_attempts-1} for {job_name}/{picture_id} in {sleep_s:.1f}s: {e}")
                 await asyncio.sleep(sleep_s)
 
-        # --- Structured parse to row ---
+        # Parse using your existing output convention
         try:
             data_for_excel = base_data.copy()
+            eval_list = [s.strip() for s in evaluation_str.split(",")]
 
-            # job["columns"] == [cat, f"{cat}Confidence", "ImageDescription"]
-            cat_col, conf_col, desc_col = job["columns"]
+            for category, value_str in zip(job["columns"], eval_list):
+                parts = value_str.split(": ", 1)
+                value = parts[1] if len(parts) == 2 else value_str
 
-            # `parsed` can be a Pydantic model or a dict (fallback path)
-            if hasattr(parsed, "presence"):
-                presence = int(parsed.presence)
-                confidence = int(parsed.confidence)
-                description = str(parsed.description)
-            else:
-                presence = int(parsed["presence"])
-                confidence = int(parsed["confidence"])
-                description = str(parsed["description"])
-
-            data_for_excel[cat_col] = presence
-            data_for_excel[conf_col] = confidence
-            data_for_excel[desc_col] = description
+                if category.lower().endswith("confidence") or category.lower() in {
+                    "naturescore", "plantpresence", "naturallightexposure", "greenness", "insideoutside"
+                }:
+                    try:
+                        data_for_excel[category] = float(value)
+                    except ValueError:
+                        data_for_excel[category] = value
+                else:
+                    data_for_excel[category] = value
 
             await progress_queue.put("success")
             return {"job_name": job_name, "data": data_for_excel}
 
         except Exception as e_parse:
             self.logger.error(
-                f"Parsing failed for job '{job_name}' / {picture_id}: {e_parse}. Raw structured: {parsed}"
+                f"Parsing failed for job '{job_name}' / {picture_id}: {e_parse}. Raw: {evaluation_str}"
             )
             await progress_queue.put("failure")
             self._record_failure(
@@ -663,10 +649,6 @@ class Imager:
                     "CONVERT_TO_EXCEL": os.getenv("CONVERT_TO_EXCEL"),
                     "DELETE_ORIGINALS": os.getenv("DELETE_ORIGINALS"),
                     "PROGRESS_REFRESH_INTERVAL": os.getenv("PROGRESS_REFRESH_INTERVAL"),
-                    # New optional generation controls:
-                    "MAX_COMPLETION_TOKENS": os.getenv("MAX_COMPLETION_TOKENS"),
-                    "TEMPERATURE": os.getenv("TEMPERATURE"),
-                    "SEED": os.getenv("SEED"),
                 },
                 "host": {
                     "hostname": socket.gethostname(),

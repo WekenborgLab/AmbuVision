@@ -1,5 +1,4 @@
 import os
-import re
 import asyncio
 import logging
 from logging.handlers import RotatingFileHandler
@@ -8,12 +7,6 @@ from datetime import datetime
 from dotenv import load_dotenv
 from Middle import Middle
 from Imager import Imager
-
-# Try to import pandas for Excel/CSV loading
-try:
-    import pandas as pd  # type: ignore
-except Exception:
-    pd = None
 
 # ---------------------------
 # Load .env early
@@ -64,105 +57,22 @@ def _init_logging(log_dir: str):
 
     return logger, log_path
 
-def sanitize_basename(name: str) -> str:
-    """
-    Minimal, OS-safe filename base:
-    - replace invalid path chars with '_'
-    - convert spaces to underscores
-    - collapse multiple underscores
-    - trim trailing dots/underscores
-    - keep case and other characters intact
-    """
-    s = name.strip()
-    s = re.sub(r'[\\/:*?"<>|]+', '_', s)
-    s = s.replace(' ', '_')
-    s = re.sub(r'_+', '_', s)
-    s = s.strip('._')
-    return s
-
-def read_categories_from_excel(path: str, col_label: str | None = None) -> list[str]:
-    if pd is None:
-        raise RuntimeError(
-            "pandas is required to read Excel/CSV categories. Install with: pip install pandas openpyxl"
-        )
-
-    if path.lower().endswith((".xlsx", ".xls")):
-        df = pd.read_excel(path)
+def create_prompt(category_name, confidence_name, is_inside_outside=False):
+    if is_inside_outside:
+        scoring_text = "For InsideOutside category use 1 for Inside and 2 for Outside."
     else:
-        df = pd.read_csv(path)
+        scoring_text = ("Analyze the image and evaluate accordingly from 1 to 10, "
+                        "whereas 1 is absolute absence and 10 is abundance of the subject, mentioned in criteria.")
 
-    if col_label and col_label in df.columns:
-        series = df[col_label]
-    else:
-        # default: first column
-        series = df.iloc[:, 0]
-
-    cats = [str(x).strip() for x in series.dropna().astype(str).tolist()]
-    # filter out accidental non-categories
-    cats = [
-        c for c in cats
-        if c
-        and c.lower() != "imagedescription"
-        and not c.lower().endswith("confidence")
-    ]
-    return cats
-
-def load_categories_from_env_or_excel() -> list[str]:
-    """
-    Precedence:
-    1) CATEGORIES (comma-separated)
-    2) CATEGORY (single)
-    3) CATEGORIES_EXCEL_PATH (+ optional CATEGORIES_COLUMN_LABEL)
-    4) fallback to original 5 categories
-    """
-    env_multi = os.getenv("CATEGORIES")
-    env_single = os.getenv("CATEGORY")
-    excel_path = os.getenv("CATEGORIES_EXCEL_PATH") or os.getenv("CATEGORY_EXCEL_PATH")
-    excel_col = os.getenv("CATEGORIES_COLUMN_LABEL") or os.getenv("CATEGORY_COLUMN_LABEL")
-
-    if env_multi:
-        raw = [c.strip() for c in env_multi.split(",")]
-    elif env_single:
-        raw = [env_single.strip()]
-    elif excel_path:
-        raw = read_categories_from_excel(excel_path, excel_col)
-    else:
-        raw = ["NatureScore", "PlantPresence", "NaturalLightExposure", "Greenness", "InsideOutside"]
-
-    # de-duplicate but keep order
-    seen = set()
-    out = []
-    for c in raw:
-        key = c.lower()
-        if key and key not in seen:
-            seen.add(key)
-            out.append(c)
-    return out
-
-def create_prompt(category_name: str) -> str:
-    # Your chosen prompt, plus "Return JSON only."
     return f"""
-            Analyze the image regarding the presence of the following category: "{category_name}",
-            return a json with three fields:
-                - "presence": 0 or 1 value indicating the presence of the category where 0 means absence and 1 means presence,
-                - "confidence": a value from 1 to 10 indicating your confidence in the presence evaluation,
-                - "description": a brief description of what is seen in the image.
-            Return JSON only.
-    """
+            Here are the given categories:
+            "{category_name}", "{confidence_name}",
+            "ImageDescription".
 
-def build_evaluation_jobs(categories: list[str]) -> list[dict]:
-    jobs = []
-    for cat in categories:
-        norm = sanitize_basename(cat)
-        confidence = f"{cat}Confidence"
-        jobs.append({
-            "name": cat,
-            "prompt": create_prompt(cat),
-            "csv_file": f"{norm}.csv",
-            "xlsx_file": f"{norm}.xlsx",
-            "columns": [cat, confidence, "ImageDescription"],
-        })
-    return jobs
+            {scoring_text} For the category with Confidence in it give out a value from 1 to 10 of how confident you are about the evaluation of the category. For image description 
+            describe what is to be seen in the picture. For output use following 
+            format Categoryname: value, Category2name: value2.... Do not say anything else
+            """
 
 async def main():
     input_folder = os.getenv("FOLDERPATH")
@@ -212,20 +122,44 @@ async def main():
         return
     print(f"Found {len(all_pictures)} total pictures.")
 
-    # --- NEW: load categories & build jobs dynamically ---
-    try:
-        categories = load_categories_from_env_or_excel()
-    except Exception as e:
-        logging.getLogger("app").exception(f"Failed to load categories: {e}")
-        print("Failed to load categories. Exiting.")
-        return
-
-    if not categories:
-        print("No categories resolved from env or Excel. Exiting.")
-        return
-
-    logger.info(f"Using categories: {categories}")
-    evaluation_jobs = build_evaluation_jobs(categories)
+    # Five separate prompts (kept intact)
+    evaluation_jobs = [
+        {
+            "name": "NatureScore",
+            "prompt": create_prompt("NatureScore", "NatureScoreConfidence"),
+            "csv_file": "nature_score.csv",
+            "xlsx_file": "nature_score.xlsx",
+            "columns": ["NatureScore", "NatureScoreConfidence", "ImageDescription"]
+        },
+        {
+            "name": "PlantPresence",
+            "prompt": create_prompt("PlantPresence", "PlantPresenceConfidence"),
+            "csv_file": "plant_presence.csv",
+            "xlsx_file": "plant_presence.xlsx",
+            "columns": ["PlantPresence", "PlantPresenceConfidence", "ImageDescription"]
+        },
+        {
+            "name": "NaturalLightExposure",
+            "prompt": create_prompt("NaturalLightExposure", "NaturalLightExposureConfidence"),
+            "csv_file": "natural_light.csv",
+            "xlsx_file": "natural_light.xlsx",
+            "columns": ["NaturalLightExposure", "NaturalLightExposureConfidence", "ImageDescription"]
+        },
+        {
+            "name": "Greenness",
+            "prompt": create_prompt("Greenness", "GreennessConfidence"),
+            "csv_file": "greenness.csv",
+            "xlsx_file": "greenness.xlsx",
+            "columns": ["Greenness", "GreennessConfidence", "ImageDescription"]
+        },
+        {
+            "name": "InsideOutside",
+            "prompt": create_prompt("InsideOutside", "InsideOutsideConfidence", is_inside_outside=True),
+            "csv_file": "insideoutside.csv",
+            "xlsx_file": "insideoutside.xlsx",
+            "columns": ["InsideOutside", "InsideOutsideConfidence", "ImageDescription"]
+        }
+    ]
 
     try:
         await imager.run_all(
