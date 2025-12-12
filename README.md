@@ -1,6 +1,6 @@
 # AmbuVision
 
-AmbuVision is a compact framework for (1) image evaluation, (2) extraction and categorization of visually detectable psychological factors from scientific papers, and (3) large-scale VLM scoring across 997 categories.
+AmbuVision is a compact framework for (1) image evaluation, (2) extraction and categorization of visually detectable psychological factors from scientific papers, (3) large-scale VLM scoring across 997 categories, and (4) statistical analysis.
 
 ---
 
@@ -22,6 +22,7 @@ AmbuVision consists of three main pipelines:
 ```plaintext
 AmbuVision/
 ├─ Step1_VLM_Greeness/            # Step 1: Image evaluation
+├─ Step2_/                        # Step 2: Factor Extraction & Categorization
 ├─ Step3_VLM_categories/          # Step 3: 997-category VLM scoring
 ├─ artifacts/
 │  ├─ epmc_fulltext/              # raw Europe PMC fulltexts
