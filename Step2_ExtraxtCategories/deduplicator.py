@@ -7,10 +7,10 @@ from openai import AsyncOpenAI
 
 # ---------------- Config ----------------
 MODEL_NAME = os.environ.get("MODEL_NAME", "GPT-OSS-120B")
-BASE_URL   = os.environ.get("OPENAI_BASE_URL", "http://pluto/v1/")
+BASE_URL   = os.environ.get("OPENAI_BASE_URL")
 API_KEY    = os.environ.get("VIRTUAL_API_KEY")
 if not API_KEY:
-    raise ValueError("❌ Missing VIRTUAL_API_KEY environment variable.")
+    raise ValueError("Missing VIRTUAL_API_KEY environment variable.")
 
 CATEGORY_COL   = "Category"
 SEED_SIZE      = 200
@@ -72,7 +72,7 @@ def pick_and_pop_row(df: pd.DataFrame, category_col: str, label: str):
 
 # ---------------- Async LLM calls ----------------
 async def chat_call(client: AsyncOpenAI, system: str, user: str, max_tokens=4096) -> str:
-    print("🧠 Calling local model...")
+    print("Calling local model...")
     resp = await client.chat.completions.create(
         model=MODEL_NAME,
         messages=[{"role": "system", "content": system},
@@ -82,7 +82,7 @@ async def chat_call(client: AsyncOpenAI, system: str, user: str, max_tokens=4096
         reasoning_effort="medium",
         extra_body={"allowed_openai_params": ["reasoning_effort"]},
     )
-    print("✅ Response received from model.")
+    print("Response received from model.")
     return (resp.choices[0].message.content or "").strip()
 
 async def seed_groups_async(client: AsyncOpenAI, labels):
@@ -114,7 +114,7 @@ Rules:
 Labels (comma-separated, may include duplicates):
 {comma_list}
 """
-    print(f"🤖 Creating seed groups with {len(labels)} labels (no de-dup).")
+    print(f"Creating seed groups with {len(labels)} labels (no de-dup).")
     content = await chat_call(client, system, user, max_tokens=12000)
     start, end = content.find("<<GROUPS-BEGIN>>"), content.find("<<GROUPS-END>>")
     extracted = content[start + len("<<GROUPS-BEGIN>>"):end].strip() if (start != -1 and end != -1 and end > start) else content.strip()
@@ -144,12 +144,12 @@ OR
 NEW: GroupName
 <<ASSIGN-END>>"""
     async with sem:
-        print(f"🟢 Assigning label: {label}")
+        print(f"Assigning label: {label}")
         content = await chat_call(client, system, user, max_tokens=256)
     start, end = content.find("<<ASSIGN-BEGIN>>"), content.find("<<ASSIGN-END>>")
     extracted = content[start + len("<<ASSIGN-BEGIN>>"):end].strip() if (start != -1 and end != -1 and end > start) else content.strip()
     decision = (extracted.splitlines()[0].strip() if extracted else "")
-    print(f"➡️ Decision for '{label}': {decision}")
+    print(f"Decision for '{label}': {decision}")
     return label, decision
 
 # ---------------- Per-file Processing ----------------
@@ -157,7 +157,7 @@ async def process_file(input_csv: str, output_csv: str):
     client = AsyncOpenAI(base_url=BASE_URL, api_key=API_KEY)
 
     df_all = pd.read_csv(input_csv)
-    print(f"\n📂 Loaded {len(df_all)} rows from {input_csv}")
+    print(f"\nLoaded {len(df_all)} rows from {input_csv}")
     if CATEGORY_COL not in df_all.columns:
         raise KeyError(f"'{CATEGORY_COL}' column not found in {input_csv}. Columns: {list(df_all.columns)}")
 
@@ -167,15 +167,15 @@ async def process_file(input_csv: str, output_csv: str):
 
     seed_labels = all_labels[:SEED_SIZE]
     remaining   = all_labels[SEED_SIZE:total_limit]
-    print(f"🌱 Seeding with {len(seed_labels)} labels; then placing {len(remaining)} more (total {total_limit}).")
+    print(f"Seeding with {len(seed_labels)} labels; then placing {len(remaining)} more (total {total_limit}).")
 
     seed_text = await seed_groups_async(client, seed_labels)
     groups = parse_groups_text(seed_text)
     if not groups:
-        print("⚠️ No seed groups parsed; falling back to 1 label per group from seed.")
+        print("No seed groups parsed; falling back to 1 label per group from seed.")
         for i, lab in enumerate(seed_labels, start=1):
             groups.append({"group": i, "name": lab, "labels": [lab]})
-    print(f"✅ Parsed {len(groups)} seed groups.")
+    print(f"Parsed {len(groups)} seed groups.")
 
     frozen_summary = groups_summary_for_prompt(groups, max_examples_per_group=6)
     sem = asyncio.Semaphore(MAX_CONCURRENT)
@@ -221,7 +221,7 @@ async def process_file(input_csv: str, output_csv: str):
 
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
     out_df.to_csv(output_csv, index=False)
-    print(f"✅ Saved {len(out_df):6d} rows to {output_csv}")
+    print(f"Saved {len(out_df):6d} rows to {output_csv}")
 
 # ---------------- Entrypoint ----------------
 async def main():
@@ -231,7 +231,7 @@ async def main():
         try:
             await process_file(path, output_path)
         except Exception as e:
-            print(f"❌ Error processing {path}: {e}")
+            print(f"Error processing {path}: {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())

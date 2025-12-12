@@ -19,7 +19,7 @@ out_dir.mkdir(parents=True, exist_ok=True)
 for file in files:
     path = Path(file)
     if not path.exists():
-        print(f"⚠️ File not found: {path}")
+        print(f"File not found: {path}")
         continue
 
     df = pd.read_csv(path)
@@ -27,7 +27,7 @@ for file in files:
     required = {"Group Name", "Psychological_variable", "direction"}
     missing = required - set(df.columns)
     if missing:
-        print(f"⚠️ Missing columns in {path.name}: {', '.join(sorted(missing))}")
+        print(f"Missing columns in {path.name}: {', '.join(sorted(missing))}")
         continue
 
     df["Group Name"] = df["Group Name"].astype(str).str.strip()
@@ -38,13 +38,13 @@ for file in files:
     df = df[df["Group Name"].notna() & (df["Group Name"] != "")]
 
     if df.empty:
-        print(f"ℹ️ No rows after filtering in {path.name}")
+        print(f"No rows after filtering in {path.name}")
         # Still write an empty summary for completeness
         out_path = out_dir / f"{path.stem}_group_psych_summary.csv"
         pd.DataFrame(columns=[
             "Group Name", "Psychological_variable", "direction", "Frequency of Groups"
         ]).to_csv(out_path, index=False)
-        print(f"✅ Wrote empty summary: {out_path}")
+        print(f"Wrote empty summary: {out_path}")
         continue
 
     # Group and count occurrences
@@ -63,4 +63,4 @@ for file in files:
     # Save per-file summary
     out_path = out_dir / f"{path.stem}_group_psych_summary.csv"
     summary.to_csv(out_path, index=False)
-    print(f"✅ Wrote summary for {path.name} → {out_path}")
+    print(f"Wrote summary for {path.name} → {out_path}")

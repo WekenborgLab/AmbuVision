@@ -16,8 +16,8 @@ OUTPUT_CSV = OUTPUT_DIR / "all_visual_associations.csv"
 TRUNCATE_CHARS = int(os.environ.get("TRUNCATE_CHARS", "350000"))
 
 MODEL_NAME = os.environ.get("MODEL_NAME", "GPT-OSS-120B")
-BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://pluto/v1/")
-API_KEY = os.environ.get("VIRTUAL_API_KEY", "VIRTUAL_API_KEY")
+BASE_URL = os.environ.get("OPENAI_BASE_URL")
+API_KEY = os.environ.get("VIRTUAL_API_KEY")
 
 EPMC_SEARCH_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
 

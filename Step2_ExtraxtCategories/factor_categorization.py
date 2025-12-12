@@ -4,12 +4,12 @@ import pandas as pd
 from openai import AsyncOpenAI
 
 MODEL_NAME = os.environ.get("MODEL_NAME", "GPT-OSS-120B")
-BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://pluto/v1/")
-API_KEY = os.environ.get("VIRTUAL_API_KEY", "VIRTUAL_API_KEY")
+BASE_URL = os.environ.get("OPENAI_BASE_URL")
+API_KEY = os.environ.get("VIRTUAL_API_KEY")
 
 INPUT_CSV  = "artifacts/visual_factors/all_visual_associations.csv"
 OUTPUT_FILE = "artifacts/visual_factors/llm_categorization.csv"
-#n=100
+
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "200"))
 
 SYSTEM_PROMPT = (
