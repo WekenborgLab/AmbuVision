@@ -21,7 +21,7 @@ unique_groups = set()
 for file in files:
     path = Path(file)
     if not path.exists():
-        print(f"⚠️ File not found: {path}")
+        print(f"File not found: {path}")
         continue
 
     df = pd.read_csv(path)
@@ -29,7 +29,7 @@ for file in files:
     required_cols = {"Group Name", "Exposure_type"}
     missing = required_cols - set(df.columns)
     if missing:
-        print(f"⚠️ Missing columns in {path.name}: {', '.join(sorted(missing))}")
+        print(f"Missing columns in {path.name}: {', '.join(sorted(missing))}")
         continue
 
     # Filter to only PASSIVE exposure type
@@ -46,4 +46,4 @@ with open(output_txt, "w", encoding="utf-8") as f:
     for name in sorted(unique_groups):
         f.write(name + "\n")
 
-print(f"✅ Saved {len(unique_groups)} unique PASSIVE group names to {output_txt}")
+print(f"Saved {len(unique_groups)} unique PASSIVE group names to {output_txt}")
