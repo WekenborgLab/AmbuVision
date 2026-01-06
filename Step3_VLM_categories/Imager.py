@@ -89,6 +89,19 @@ class Imager:
 
     # ---------- basic IO ----------
 
+    # Imager.py (add inside class Imager)
+    def _save_debug_image(self, folder: str, picture_id: str, jpeg_bytes: bytes):
+        try:
+            out_dir = os.path.join(self.output_path, "_debug_compressed", folder)
+            os.makedirs(out_dir, exist_ok=True)
+            out_path = os.path.join(out_dir, f"{Path(picture_id).stem}.jpg")
+            with open(out_path, "wb") as f:
+                f.write(jpeg_bytes)
+            self.logger.info(f"Saved debug compressed JPEG -> {out_path}")
+        except Exception as e:
+            self.logger.warning(f"Failed to save debug image for {picture_id}: {e}")
+
+
     def getInputFolder(self):
         return self.input_path
 
@@ -409,6 +422,8 @@ class Imager:
 
             # Downscale + JPEG compress once in memory (low-RAM path if pyvips available)
             compressed_bytes = await asyncio.to_thread(self._downscale_to_jpeg, image_path)
+            # self._save_debug_image(folder, picture_id, compressed_bytes)
+            # breakpoint()
 
             base_data = {
                 "PictureId": picture_id,
@@ -535,7 +550,7 @@ class Imager:
 
     def _convert_csvs_to_excel(self, jobs):
         for job in jobs:
-            csv_path = os.path.join(self.output_path, job["csv_file"])
+            csv_path = os.path.join(self.output_path, j["csv_file"]) if False else os.path.join(self.output_path, job["csv_file"])
             xlsx_path = os.path.join(self.output_path, job["xlsx_file"])
             if not os.path.exists(csv_path):
                 continue
@@ -649,6 +664,10 @@ class Imager:
                     "CONVERT_TO_EXCEL": os.getenv("CONVERT_TO_EXCEL"),
                     "DELETE_ORIGINALS": os.getenv("DELETE_ORIGINALS"),
                     "PROGRESS_REFRESH_INTERVAL": os.getenv("PROGRESS_REFRESH_INTERVAL"),
+                    # New optional generation controls:
+                    "MAX_COMPLETION_TOKENS": os.getenv("MAX_COMPLETION_TOKENS"),
+                    "TEMPERATURE": os.getenv("TEMPERATURE"),
+                    "SEED": os.getenv("SEED"),
                 },
                 "host": {
                     "hostname": socket.gethostname(),

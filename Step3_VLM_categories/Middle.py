@@ -2,26 +2,80 @@ import base64
 import os
 import httpx
 from openai import OpenAI, AsyncOpenAI, APIConnectionError
+from typing import Optional
+
 
 class Middle:
     def __init__(self):
         self.base_url = os.environ['BASE_URL']
         self.model = os.environ['MODEL']
 
+        # Optional generation controls (only sent if set)
+        self.max_completion_tokens: Optional[int] = None
+        self.temperature: Optional[float] = None
+        self.seed: Optional[int] = None
+
+        # Parse env vars safely; leave as None if not provided
+        _mct = os.getenv("MAX_COMPLETION_TOKENS")
+        if _mct is not None and _mct.strip() != "":
+            try:
+                self.max_completion_tokens = int(_mct)
+            except ValueError:
+                print(f"WARNING: Invalid MAX_COMPLETION_TOKENS={_mct!r}; ignoring.")
+
+        _temp = os.getenv("TEMPERATURE")
+        if _temp is not None and _temp.strip() != "":
+            try:
+                self.temperature = float(_temp)
+            except ValueError:
+                print(f"WARNING: Invalid TEMPERATURE={_temp!r}; ignoring.")
+
+        _seed = os.getenv("SEED")
+        if _seed is not None and _seed.strip() != "":
+            try:
+                self.seed = int(_seed)
+            except ValueError:
+                print(f"WARNING: Invalid SEED={_seed!r}; ignoring.")
+
         self.client = OpenAI(base_url=self.base_url)
         self.async_client = AsyncOpenAI(base_url=self.base_url)
 
         self.outputFileName = 'Output.xlsx'
-        print(f"Middle point has been initialized.\nYour URL is {self.base_url}.\nThe chosen model is {self.model}")
+        print(
+            "Middle point has been initialized.\n"
+            f"Your URL is {self.base_url}.\n"
+            f"The chosen model is {self.model}"
+        )
+
+    def _common_chat_kwargs(self):
+        """
+        Build kwargs for chat.completions.create, adding optional params
+        only if they are explicitly set. This ensures we *do not send*
+        unset parameters to the API.
+        """
+        kwargs = {}
+        if self.max_completion_tokens is not None:
+            kwargs["max_completion_tokens"] = self.max_completion_tokens
+        if self.temperature is not None:
+            kwargs["temperature"] = self.temperature
+        if self.seed is not None:
+            kwargs["seed"] = self.seed
+        return kwargs
 
     def test_connection(self):
         print(f"Attempting to connect to {self.base_url} and get a response from {self.model}...")
         try:
+            kwargs = self._common_chat_kwargs()
+            # Keep a reasonable timeout; do not force token/temperature if unset
+            kwargs["timeout"] = 15
+
             response = self.client.chat.completions.create(
                 model=self.model,
-                messages=[{"role": "user", "content": [{"type": "text", "text": "Test. Respond with OK."}]}],
-                max_tokens=5,
-                timeout=15,
+                messages=[{
+                    "role": "user",
+                    "content": [{"type": "text", "text": "Test. Respond with OK."}]
+                }],
+                **kwargs,
             )
             if response.choices and response.choices[0].message and response.choices[0].message.content:
                 print("Connection and LLM response successful!")
@@ -44,6 +98,11 @@ class Middle:
         """
         try:
             b64 = self._encode_bytes(image_bytes)
+
+            kwargs = self._common_chat_kwargs()
+            # Reasonable request timeout; do not send generation params unless set
+            kwargs["timeout"] = 90
+
             response = await self.async_client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -55,8 +114,7 @@ class Middle:
                         ]
                     }
                 ],
-                max_tokens=500,
-                timeout=90,
+                **kwargs,
             )
             content = response.choices[0].message.content
             usage = None

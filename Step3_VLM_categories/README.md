@@ -1,65 +1,97 @@
-# Step 3: Using 997 categories
+# Step 3: VLM Multi-Category Evaluation
 
-## Project Structure
+Evaluates images using Vision Language Models (VLM) across 997 psychological categories loaded from an Excel file. Uses temperature=0 for reproducible results.
 
-```text
-Ambuvision/
-├─ Step3_VLM_categories/
-│  ├─ Imager.py                                                           # Work with images and jobs
-│  ├─ Middle.py                                                           # Middle point between host and server
-│  ├─ main.py                                                             # Execution of all scripts combined
-│  ├─ allpsychologicalvariables_greater_equal_3_withoutdublicates.xlsx    # excel file with categories
-│  ├─ pyproject.toml                                                      # Central configuration file containing project metadata,Python version requirements, dependencies, and build-system settings 
-│  ├─ README.md
+## Prerequisites
+
+- **Python 3.13+**
+- **uv** (Python package manager) - install with: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- **OpenAI-compatible API endpoint** (e.g., OpenAI, local LLM server, or other provider)
+
+## Setup
+
+1. **Install dependencies:**
+   ```bash
+   uv sync
+   ```
+
+2. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` and set the required variables:
+   - `FOLDERPATH` - Path to folder containing subfolders with images (JPG/PNG)
+   - `BASE_URL` - Your LLM API endpoint (e.g., `https://api.openai.com/v1`)
+   - `MODEL` - Model name (e.g., `gpt-4o-mini`)
+   - `OPENAI_API_KEY` - Your API key
+
+   **Categories configuration** (choose one):
+   - **Option A (Excel/CSV):** Set `CATEGORIES_EXCEL_PATH` to your categories file (e.g., `allpsychologicalvariables_greater_equal_3_withoutdublicates.xlsx`)
+   - **Option B (Comma-separated):** Set `CATEGORIES=PlantPresence,Greenness,NaturalLightExposure`
+   - **Option C (Single category):** Set `CATEGORY=PlantPresence`
+   - **Option D (Fallback):** Uses default 5 categories if none specified
+
+   Optional settings (see `.env.example` for defaults):
+   - `OUTPUT_DIR` - Where to save results (default: current directory)
+   - `MAX_CONCURRENCY` -
+1. **I of parallel workers (default: 12)
+   - `MAX_IMAGE_SIZE` - Longest side in pixels, 0 = no resize (default: 1280)
+   - `CONVERT_TO_EXCEL` - Generate Excel files alongside CSV (default: True)
+   - `TEMPERATURE` - Sampling temperature (default: 0.0 for reproducibility)
+   - `SEED` - Random seed for reproducibility (default: 42)
+   - `MAX_COMPLETION_TOKENS` - Max tokens in response (default: 500)
+
+## Running the Experiments
+
+```bash
+uv run python main.py
 ```
 
-## main
-This script processes all images in a given folder and evaluates each one across a set of 997 categories using LLaMA 4 vision-language model and Qwen3-VL-235B-A22B-Instruct-FP8. Categories can come from environment variables, a single Excel/CSV file, or a built-in fallback list. For each category, the script generates a prompt, runs model inference, and saves results to CSV/Excel.
-#### Key features:
-Loads settings from .env (paths, categories, concurrency, cost tracking, etc.)
-Reads categories from env vars or Excel/CSV
-Automatically builds evaluation jobs
-Processes all images, optionally resizes/compresses them
-Runs model calls in parallel and outputs logs, results, and token usage
-#### Run:
-python main.py
-Requires proper .env configuration and (optionally) pandas/openpyxl for Excel support.
+The scri   - **Option B (Comma-separated):** Set `CATEGORIES=PlantPresence,Greenness,NaturalLightExposure`
+   - **Option C (Single category):** Set `scale images to reduce API costs (if `MAX_IMAGE_SIZE` > 0)
+4. Send each image to the LLM with evaluation prompts for all categories
+5. Stream results to CSV files in real-time
+6. Convert CSVs to Excel (if enabled)
+7. Generate token usage and failure reports
 
-## Imager
-The Imager class handles all low-level image processing, batching and result writing for the pipeline.
-### What it does:
-Scans the input folder and collects all jpg/png images (grouped by subfolder).
-Robustly opens images (PIL, optionally imageio / pyvips), reads EXIF timestamps, and downsizes/compresses to JPEG.
-Runs all jobs per image with bounded async concurrency, including retries with backoff.
-Streams results into per-job CSV files and optionally converts them to Excel.
-Tracks token usage per job and overall, writing tokens.json and tokens.csv.
-Logs all failures to failures.csv.
-Optionally writes rich experiment metadata (experiment.json + experiment_summary.csv), including environment, host info and output files.
-The main script (main.py) wires this module together with the model client (Middle) and environment configuration.
+## Input Structure
 
-## Middle module
-The Middle class is the API bridge between the image pipeline and the OpenAI-compatible server.
-### What it does:
-Reads BASE_URL, MODEL and optional generation controls (MAX_COMPLETION_TOKENS, TEMPERATURE, SEED) from environment variables.
-Initializes sync and async OpenAI clients and provides a test_connection() helper to verify the server/model.
-Encodes images to base64 and sends multimodal chat requests (text + image).
-Uses Pydantic (CategoryResponse) for structured responses (presence, confidence, description), with a fallback JSON-parse path.
-Returns both the parsed result and optional token usage (prompt_tokens, completion_tokens, total_tokens) for downstream cost tracking.
-The main script (main.py) uses Middle in combination with Imager to run all category evaluations over all images.
+```
+FOLDERPATH/
+├── subfolder1/
+│   ├── image1.jpg
+│   ├── image2.png
+│   └── ...
+├── subfolder2/
+│   └── ...
+└── ...
+```
 
-## Project configuration (pyproject.toml)
-The project uses a modern Python packaging setup based on PEP 621 and Hatchling.
-Key points:
-Defines the project as AmbuVision, version 0.1.0.
-Requires Python ≥ 3.13.
-Lists core dependencies:
-python-dotenv for environment variable loading
-openai for the LLM/multimodal API
-pillow for image decoding
-pandas and openpyxl for CSV/Excel output
-Specifies README.md as the long description.
-Uses Hatchling as the build backend.
-This file enables clean installation, reproducible dependency management, and packaging support for the entire pipeline.
+## Output
 
-## Categories
-The 997 categories are included in the excel sheet "allpsychologicalvariables_greater_3_withoutdublicates.xlsx.
+A timestamped folder is created in `OUTPUT_DIR` containing:
+
+- **Evaluation results** (one CSV/Excel per category):
+  - `{category_name}.csv` / `{category_name}.xlsx`
+  - Example: `plant_presence.csv`, `greenness.csv`, etc.
+
+- **Metadata and logs**:
+  - `tokens.json` / `tokens.csv` - Token usage per category and overall
+  - `failures.csv` - Failailed execution log
+  - `experiment.json` / `experiment_summary.csv` - Run metadata (if `WRITE_EXPERIMENT_METADATA=True`)
+
+Each CSV contains: `PictureId`, `Folder`, `TimeCreated`, `TimeDigitized`, `TimeModified`, plus the category presence score (0-1), confidence (1-10), and image description.
+
+## Evaluation Categories
+
+The 997 psychological categories are loaded from `allpsychologicalvariables_greater_equal_3_withoutdublicates.xlsx`. Each category returns:
+
+- **Presence**: 0 (absence) to 1 (abundance) - except InsideOutside which uses 1=Inside, 2=Outside
+- **Confidence**: 1-10 rating of evaluation confidence
+- **ImageD└── ...
+```
+f description of what's visible in the image
+
+## Reproducibility
+
+This step uses `TEMPERATURE=0` and `SEED=42` by default to ensure reproducible results across multiple runs. These settings can be adjusted in `.env` if needed.
