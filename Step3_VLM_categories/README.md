@@ -86,11 +86,9 @@ Each CSV contains: `PictureId`, `Folder`, `TimeCreated`, `TimeDigitized`, `TimeM
 
 The 997 psychological categories are loaded from `allpsychologicalvariables_greater_equal_3_withoutdublicates.xlsx`. Each category returns:
 
-- **Presence**: 0 (absence) to 1 (abundance) - except InsideOutside which uses 1=Inside, 2=Outside
+- **Presence**: 1 (absence) to 10 (abundance)
 - **Confidence**: 1-10 rating of evaluation confidence
-- **ImageD└── ...
-```
-f description of what's visible in the image
+- **ImageDescription**: Description of what's visible in the image
 
 ## Reproducibility
 
