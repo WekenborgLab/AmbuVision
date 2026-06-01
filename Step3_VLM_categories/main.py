@@ -131,11 +131,11 @@ def load_categories_from_env_or_excel() -> list[str]:
             out.append(c)
     return out
 
-def create_prompt(category_name, confidence_name, is_inside_outside=False):
+def create_prompt(category_name):
     return f"""
             Analyze the image regarding the presence of the following category: "{category_name}",
             Return a JSON with three fields:
-                - "presence": 1 or 10 value indicating the presence (1=absolute absence, 10=dominance presence),
+                - "presence": 1 to 10 value indicating the presence (1=absolute absence, 10=dominance presence),
                 - "confidence": 1 to 10 value indicating confidence regarding the presence of the category,
                 - "description": a brief description of what is seen in the image.
             Return JSON only.
@@ -151,7 +151,7 @@ def build_evaluation_jobs(categories: list[str]) -> list[dict]:
         confidence = f"{cat}Confidence"
         jobs.append({
             "name": cat,
-            "prompt": create_prompt(cat, confidence, is_inside_outside=is_io),
+            "prompt": create_prompt(cat),
             "csv_file": f"{norm}.csv",
             "xlsx_file": f"{norm}.xlsx",
             "columns": [cat, confidence, "ImageDescription"],
