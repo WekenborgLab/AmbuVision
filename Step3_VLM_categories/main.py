@@ -131,31 +131,15 @@ def load_categories_from_env_or_excel() -> list[str]:
             out.append(c)
     return out
 
-# def create_prompt(category_name, confidence_name, is_inside_outside=False):
-#     return f"""
-#             Analyze the image regarding the presence of the following category: "{category_name}",
-#             return a json with three fields:
-#                 - "presence": 0 or 1 value indicating the presence of the category where 0 means absence and 1 means presence,
-#                 - "confidence": a value from 1 to 10 indicating your confidence in the presence evaluation,
-#                 - "description": a brief description of what is seen in the image.
-#     """
-
 def create_prompt(category_name, confidence_name, is_inside_outside=False):
-    if is_inside_outside:
-        scoring_text = "For InsideOutside category use 1 for Inside and 2 for Outside."
-    else:
-        scoring_text = ("Analyze the image and evaluate the presence of the category, "
-                        "whereas 0 is absolute absence and 1 is abundance of the category, mentioned in criteria.")
-
     return f"""
-            Here are the given categories:
-            "{category_name}", "{confidence_name}",
-            "ImageDescription".
-
-            {scoring_text} For the category with Confidence in it give out a value from 1 to 10 of how confident you are about the evaluation of the category. For image description 
-            describe what is to be seen in the picture. For output use following 
-            format Categoryname: value, Category2name: value2.... Do not say anything else
-            """
+            Analyze the image regarding the presence of the following category: "{category_name}",
+            Return a JSON with three fields:
+                - "presence": 1 or 10 value indicating the presence (1=absolute absence, 10=dominance presence),
+                - "confidence": 1 to 10 value indicating confidence regarding the presence of the category,
+                - "description": a brief description of what is seen in the image.
+            Return JSON only.
+    """
 
 def build_evaluation_jobs(categories: list[str]) -> list[dict]:
     jobs = []
