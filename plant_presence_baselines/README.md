@@ -6,10 +6,8 @@ configuration files.
 
 This folder contains:
 
-- `yoloe/`: open-vocabulary YOLOE plant segmentation using the prompt `plant`.
 - `yolo_oiv7/`: YOLOv8x Open Images V7 detection for the class `Plant`.
 - `color_baseline/`: cheap RGB/HSV greenness baseline and image-prep helper.
-- `tools/`: comparison plots for plant-presence CSV outputs.
 
 ## What is intentionally not tracked
 
@@ -35,10 +33,10 @@ All pipelines expect a folder with one subfolder per participant:
     ...
 ```
 
-## YOLOE plant segmentation
+## YOLOv8 Open Images V7 plant detection
 
 ```bash
-cd plant_presence_baselines/yoloe
+cd plant_presence_baselines/yolo_oiv7
 uv sync
 cp .env.example .env
 ```
@@ -56,28 +54,7 @@ Run:
 uv run python detect.py
 ```
 
-Outputs are written to `$OUTPUT_DIR/<timestamp>/`:
-
-- `plant_presence.csv`
-- `experiment.json`
-- `run.log`
-- `failures.csv` if any images fail
-
-## YOLOv8 Open Images V7 plant detection
-
-```bash
-cd plant_presence_baselines/yolo_oiv7
-uv sync
-cp .env.example .env
-```
-
-Edit `.env` the same way as for YOLOE, then run:
-
-```bash
-uv run python detect.py
-```
-
-The output schema matches the YOLOE detector:
+The output schema is:
 
 ```text
 PictureId, Folder, PlantPresence, NumPlantDetections,
@@ -144,20 +121,3 @@ Rscript color_baseline/compare_baseline_vs_vlm.R \
 
 Run the same command with `--label vlm` and the VLM `greenness.csv` to append a
 side-by-side `comparison_summary.csv`.
-
-## Compare detector outputs
-
-```bash
-python tools/compare.py \
-  /path/to/yolo_oiv7_run/plant_presence.csv \
-  /path/to/yoloe_run/plant_presence.csv \
-  --out /path/to/compare.png
-
-python tools/compare3.py \
-  /path/to/model_a.csv \
-  /path/to/model_b.csv \
-  /path/to/model_c.csv \
-  --out /path/to/compare3.png
-```
-
-The comparison plots are generated artifacts and should stay out of git.
