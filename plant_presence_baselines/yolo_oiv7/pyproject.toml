@@ -1,0 +1,17 @@
+[project]
+name = "yolo-plant-presence"
+version = "0.1.0"
+description = "YOLO-based plant presence detection, mirroring AmbuVision Step1 VLM PlantPresence output format"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "ultralytics>=8.3.40",
+    "torch>=2.3",
+    "torchvision>=0.18",
+    "pillow>=10.0",
+    "pandas>=2.0",
+    "openpyxl>=3.1",
+    "tqdm>=4.66",
+    "python-dotenv>=1.0",
+    "numpy>=1.26",
+    "matplotlib>=3.10.9",
+]

@@ -24,6 +24,7 @@ AmbuVision/
 ├─ Step1_VLM_Greeness/            # Step 1: Image evaluation
 ├─ Step2_/Extract_categories      # Step 2: Factor Extraction & Categorization
 ├─ Step3_VLM_categories/          # Step 3: 997-category VLM scoring
+├─ plant_presence_baselines/      # Supplemental YOLO/color baselines
 ├─ artifacts/
 │  ├─ epmc_fulltext/              # raw Europe PMC fulltexts
 │  └─ visual_factors/
@@ -44,4 +45,3 @@ Python 3.10+ for EPMC pipeline
 Python 3.13+ for image pipelines
 OpenAI-compatible LLM/VLM server
 Disk space for ~65k papers
-

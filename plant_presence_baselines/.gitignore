@@ -1,0 +1,41 @@
+# Local secrets/config
+.env
+*.env
+!.env.example
+
+# Input data and generated outputs
+images/
+filtered/
+filtered_prepped/
+runs/
+outputs/
+artifacts/
+*.csv
+*.xlsx
+*.json
+*.log
+*.out
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.webp
+*.tif
+*.tiff
+Thumbs.db
+
+# Model/checkpoint binaries
+*.pt
+*.pth
+*.onnx
+*.engine
+*.safetensors
+*.ts
+
+# Python/R local state
+.venv/
+__pycache__/
+*.py[cod]
+.Rhistory
+.RData
+.Rproj.user/
