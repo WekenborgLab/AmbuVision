@@ -24,7 +24,7 @@ AmbuVision/
 ├─ Step1_VLM_Greeness/            # Step 1: Image evaluation
 ├─ Step2_/Extract_categories      # Step 2: Factor Extraction & Categorization
 ├─ Step3_VLM_categories/          # Step 3: 997-category VLM scoring
-├─ plant_presence_baselines/      # Supplemental YOLO/color baselines
+├─ baseline_comparison/           # Supplemental baseline comparison pipelines
 ├─ artifacts/
 │  ├─ epmc_fulltext/              # raw Europe PMC fulltexts
 │  └─ visual_factors/
